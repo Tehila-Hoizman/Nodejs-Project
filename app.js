@@ -4,6 +4,7 @@ const cors = require("cors");
 
 //routes
 const userRouter = require("./routes/user.route");
+const recipeRouter = require("./routes/recipe.route");
 
 const { pageNotFound, serverNotFound } = require("./middlewares/handleErrors");
 
@@ -25,6 +26,7 @@ app.get("/", (req, res) => {
     res.send("wellcome");
 })
 app.use("/users", userRouter);
+app.use("/recipes", recipeRouter);
 
 // אם הגענו לכאן - ניתוב לא קיים
 app.use(pageNotFound);
