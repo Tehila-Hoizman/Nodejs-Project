@@ -1,8 +1,9 @@
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const Joi = require('joi');
-
+const joi = require('joi');
+const { joiPasswordExtendCore } = require('joi-password');
+const joiPassword = joi.extend(joiPasswordExtendCore);
 const addressSchema = new mongoose.Schema({
     city: { type: String },
     street: { type: String },
@@ -15,8 +16,8 @@ const userSchema = new mongoose.Schema({
     address: [addressSchema],
     role: { type: String, default: 'user', enum: ['admin', 'user'] }
 })
-//הצפנת הסיסמה קודם השמירה במסד נתונים
-// this-חובה לשלוח פונקציה רגילה ולא חץ בגלל השימוש ב
+//encrypt the password before saving it in a database
+//must to send a standard function and not an arrow function because use "this"
 userSchema.pre('save', function (next) {
     bcrypt.hash(this.password, +process.env.BCRYPT_SALT, async (err, hashPass) => {
         if (err)
@@ -29,16 +30,23 @@ module.exports.userSchema = userSchema;
 module.exports.User = mongoose.model('users', userSchema);
 
 module.exports.userValidators = {
-    login: Joi.object().keys({
-        email: Joi.string().email().required(),
-        password: Joi.string().min(8),
+    login: joi.object().keys({
+        email: joi.string().email().required(),
+        password: joiPassword
+        .string().min(6).max(10)
+        .minOfNumeric(3)
+        .noWhiteSpaces()
+        .doesNotInclude(['password'])
+        .onlyLatinCharacters()
+        .minOfUppercase(1)
+        .minOfSpecialCharacters(1)
     })
 }
 
-// יצירת הטוקן
+//token creation
 module.exports.generateToken = (user) => {
-    const privateKey = process.env.JWT_SECRET || 'JWT_SECRET'; // מחרוזת סודית שלפיה נוצר הטוקן
-    const data = { role: user.role, user_id: user._id }; // הנתונים שרלוונטיים עבור הרשאות משתמש
-    const token = jwt.sign(data, privateKey, { expiresIn: '1h' }); // יצירת הטוקן + תפוגה
+    const privateKey = process.env.JWT_SECRET || 'JWT_SECRET'; // secret string by which the token was created
+    const data = { role: user.role, user_id: user._id }; //the data that is relevant for user permissions
+    const token = jwt.sign(data, privateKey, { expiresIn: '1h' }); //token creation + expiration
     return token;
 }
