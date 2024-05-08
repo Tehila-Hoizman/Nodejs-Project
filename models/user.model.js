@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-// const Joi = require('joi');
+const Joi = require('joi');
 
 const addressSchema = new mongoose.Schema({
     city: { type: String },
@@ -28,12 +28,12 @@ userSchema.pre('save', function (next) {
 module.exports.userSchema = userSchema;
 module.exports.User = mongoose.model('users', userSchema);
 
-// module.exports.userValidators = {
-//     login:Joi.object().keys({
-//         email: Joi.string().email().required(),
-//         password: Joi.string().min(8),
-//     })
-// }
+module.exports.userValidators = {
+    login: Joi.object().keys({
+        email: Joi.string().email().required(),
+        password: Joi.string().min(8),
+    })
+}
 
 // יצירת הטוקן
 module.exports.generateToken = (user) => {

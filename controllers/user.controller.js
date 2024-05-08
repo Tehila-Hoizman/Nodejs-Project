@@ -2,9 +2,7 @@ const bcrypt = require('bcrypt');
 const { User, generateToken, userValidators } = require("../models/user.model");
 
 exports.signIn = async (req, res, next) => {
-    // const v = userValidators.login.validate(req.body);
-    // if(v.error)
-    //     return next({ message: v.error.message })
+
     // קבלת מייל וסיסמא מגוף ההודעה
     const { email, password } = req.body;
 
@@ -33,6 +31,9 @@ exports.signIn = async (req, res, next) => {
 }
 
 exports.signUp = async (req, res, next) => {
+        const v = userValidators.login.validate(req.body);
+    if(v.error)
+        return next({ message: v.error.message })
     const { username, password, email, address, role } = req.body;
 
     try {

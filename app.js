@@ -25,8 +25,8 @@ app.use(cors()); // אפשור גישה לכל הכתובות
 app.get("/", (req, res) => {
     res.send("wellcome");
 })
-app.use("/users", userRouter);
 app.use("/recipes", recipeRouter);
+app.use("/users", userRouter);
 
 // אם הגענו לכאן - ניתוב לא קיים
 app.use(pageNotFound);
