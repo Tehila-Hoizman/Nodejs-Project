@@ -41,3 +41,13 @@ exports.getRecipeByUserName = async (req, res, next) => {
         next(error);
     }
 };
+exports.addRecipe = async(req,res,next)=>{
+    try{
+        const r = new Recipe(req.body);
+        await c.save(); // מנסה לשמור במסד נתונים
+        return res.status(201).json(c); // כאן יהיו כל הנתונים של האוביקט שנשמר במ"נ
+    }catch(err){
+        next(err);
+    }
+    
+}
