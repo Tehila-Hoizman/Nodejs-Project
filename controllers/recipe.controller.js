@@ -13,7 +13,21 @@ exports.getAllRecipes = async (req, res, next) => {
             .limit(perPage)
             .select('-__v');
         return res.json(recipes);
-    }catch(error){
+    } catch (error) {
         next(error);
     }
+}
+
+exports.getRecipeById = (req, res, next) => {
+    const id = req.params.id;
+    if(!mongoose.Types.ObjectId.isValid(id))
+        next({message:'id is not valid'})
+    else
+        Recipe.findById(id,{ __v: false})
+    .then(r=>{
+        res.json(r);
+    })
+    .catch(err=>{
+        next({ message: 'recipe not found', status: 404 })
+    })
 }
