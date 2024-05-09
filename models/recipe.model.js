@@ -4,7 +4,7 @@ const layerSchema = new mongoose.Schema({
     components:{type:[String]}
 })
 const userSchema = new mongoose.Schema({
-    _id:{type:Number},
+    _id:{type:mongoose.Types.ObjectId},
     name:{type:String}
 })
 const recipeSchema = new mongoose.Schema({

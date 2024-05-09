@@ -30,11 +30,12 @@ exports.getRecipeById = (req, res, next) => {
                 next({ message: 'recipe not found', status: 404 })
             })
 }
-exports.getRecipeByUserName = async (req, res, next) => {
-    const name = req.params.name;
+exports.getRecipeByUser = async (req, res, next) => {
+    const id = req.params.id;
 
     try {
-        const recipes = await Recipe.find({ name: new RegExp(name) })
+        console.log("id "+id);
+        const recipes = await Recipe.find({ "user._id": id })
             .select('-__v');
         return res.json(recipes);
     } catch (error) {
@@ -50,4 +51,19 @@ exports.addRecipe = async(req,res,next)=>{
         next(err);
     }
     
+}
+exports.deleteRecipe = async (req,res,next)=>{
+    const id = req.params.id;
+    if(!mongoose.Types.ObjectId.isValid(id))
+        next({message:'id is not valid'});
+    else{
+        try{
+            if(!(await Recipe.findById(id)))
+                return next({ message: 'recipe not found!!!', status: 404 })
+            await Recipe.findByIdAndDelete(id);
+            return res.status(204).send();
+        }catch(err){
+            return next(err);
+        }
+    }
 }
