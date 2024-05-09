@@ -81,38 +81,53 @@ exports.addRecipe = async (req, res, next) => {
     }
 
 }
+exports.updateRecipe = async (req, res, next) => {
+    const id = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(id))
+        next({ message: 'id is not valid' })
+
+    try {
+        const r = await Recipe.findByIdAndUpdate(
+            id,
+            { $set: req.body },
+            { new: true } // החזרת האוביקט החדש שהתעדכן
+        )
+        return res.json(r);
+    } catch (error) {
+        next(error)
+    }
+};
 exports.deleteRecipe = async (req, res, next) => {
     const id = req.params.id;
     if (!mongoose.Types.ObjectId.isValid(id))
         next({ message: 'id is not valid' });
     else {
         try {
+            //המתכון המבוקש למחוק
             let r = await Recipe.findById(id);
             if (!r)
                 return next({ message: 'recipe not found!!!', status: 404 })
-
+            //מעבר על קטגוריות המתכון
             r.categories.forEach(async c => {
-                    try {
-                        await Category.updateOne(
-                            { name: c },
-                            { $pull: { recipes: { _id: r._id } } }
-                        );
-                        let category = await Category.findOne( { name: c }).then(c => {
-                            return c;
-                        })
+                try {
+                    //הסרת המתכון מהקטגוריה
+                    await Category.updateOne(
+                        { name: c },
+                        { $pull: { recipes: { _id: r._id } } }
+                    );
+                    //הקטגוריה
+                    let category = await Category.findOne({ name: c }).then(c => {
+                        return c;
+                    })
                         .catch(err => {
                             next({ message: 'recipe not found', status: 404 })
                         });
-                        if(category.recipes.length===0)
-                            await Category.findByIdAndDelete(category._id);
-                    } catch (err) {
-                        return next(err);
-                    }
-                    // if (category.recipes.length == 0)
-                    //     await Category.findByIdAndDelete(c._id);
-                    // else
-                    //     await category.save();
-                
+                    //בדיקה אם נותרו עוד מתכונים בקטגוריה ומחיקה אם לא
+                    if (category.recipes.length === 0)
+                        await Category.findByIdAndDelete(category._id);
+                } catch (err) {
+                    return next(err);
+                }
             });
             await Recipe.findByIdAndDelete(id);
             return res.status(204).send();
