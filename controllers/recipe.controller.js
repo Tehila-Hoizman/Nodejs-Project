@@ -32,9 +32,7 @@ exports.getRecipeById = (req, res, next) => {
 }
 exports.getRecipeByUser = async (req, res, next) => {
     const id = req.params.id;
-
     try {
-        console.log("id "+id);
         const recipes = await Recipe.find({ "user._id": id })
             .select('-__v');
         return res.json(recipes);
@@ -42,27 +40,37 @@ exports.getRecipeByUser = async (req, res, next) => {
         next(error);
     }
 };
-exports.addRecipe = async(req,res,next)=>{
-    try{
+exports.getRecipeBypreparationTime = async (req, res, next) => {
+    const time = req.params.time;
+    try {
+        const recipes = await Recipe.find({ preparationTimeInMinute: { $lte: time } })
+            .select('-__v');
+        return res.json(recipes);
+    }catch (error) {
+        next(error);
+    }
+}
+exports.addRecipe = async (req, res, next) => {
+    try {
         const r = new Recipe(req.body);
         await r.save(); // מנסה לשמור במסד נתונים
         return res.status(201).json(r); // כאן יהיו כל הנתונים של האוביקט שנשמר במ"נ
-    }catch(err){
+    } catch (err) {
         next(err);
     }
-    
+
 }
-exports.deleteRecipe = async (req,res,next)=>{
+exports.deleteRecipe = async (req, res, next) => {
     const id = req.params.id;
-    if(!mongoose.Types.ObjectId.isValid(id))
-        next({message:'id is not valid'});
-    else{
-        try{
-            if(!(await Recipe.findById(id)))
+    if (!mongoose.Types.ObjectId.isValid(id))
+        next({ message: 'id is not valid' });
+    else {
+        try {
+            if (!(await Recipe.findById(id)))
                 return next({ message: 'recipe not found!!!', status: 404 })
             await Recipe.findByIdAndDelete(id);
             return res.status(204).send();
-        }catch(err){
+        } catch (err) {
             return next(err);
         }
     }
