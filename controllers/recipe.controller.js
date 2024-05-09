@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { Recipe } = require("../models/recipe.model");
+const { Category } = require('../models/category.model');
 
 exports.getAllRecipes = async (req, res, next) => {
     let { search, page, perPage } = req.query;
@@ -46,7 +47,7 @@ exports.getRecipeBypreparationTime = async (req, res, next) => {
         const recipes = await Recipe.find({ preparationTimeInMinute: { $lte: time } })
             .select('-__v');
         return res.json(recipes);
-    }catch (error) {
+    } catch (error) {
         next(error);
     }
 }
@@ -54,6 +55,26 @@ exports.addRecipe = async (req, res, next) => {
     try {
         const r = new Recipe(req.body);
         await r.save(); // מנסה לשמור במסד נתונים
+        //מעבר על רשימת הקטגוריות
+        r.categories.forEach(async c => {
+            // בדיקה על כל קטגוריה האם קיימת כבר
+            let category = await Category.findOne({ name: c })
+            // במידה ולא מוסיף קטגוריה
+            if (!category) {
+                try {
+                    const newCategory = new Category({ name: c, recipes: [] });
+                    await newCategory.save(); // מנסה לשמור במסד נתונים
+                    category = newCategory;
+                } catch (err) {
+                    next(err);
+                }
+
+            }
+            //מוסיף את המתכון לרשימת מתכונים של הקטגוריה
+            category.recipes.push({ _id: r._id, name: r.name })
+            await category.save(); // מנסה לשמור במסד נתונים
+
+        });
         return res.status(201).json(r); // כאן יהיו כל הנתונים של האוביקט שנשמר במ"נ
     } catch (err) {
         next(err);
@@ -66,8 +87,33 @@ exports.deleteRecipe = async (req, res, next) => {
         next({ message: 'id is not valid' });
     else {
         try {
-            if (!(await Recipe.findById(id)))
+            let r = await Recipe.findById(id);
+            if (!r)
                 return next({ message: 'recipe not found!!!', status: 404 })
+
+            r.categories.forEach(async c => {
+                    try {
+                        await Category.updateOne(
+                            { name: c },
+                            { $pull: { recipes: { _id: r._id } } }
+                        );
+                        let category = await Category.findOne( { name: c }).then(c => {
+                            return c;
+                        })
+                        .catch(err => {
+                            next({ message: 'recipe not found', status: 404 })
+                        });
+                        if(category.recipes.length===0)
+                            await Category.findByIdAndDelete(category._id);
+                    } catch (err) {
+                        return next(err);
+                    }
+                    // if (category.recipes.length == 0)
+                    //     await Category.findByIdAndDelete(c._id);
+                    // else
+                    //     await category.save();
+                
+            });
             await Recipe.findByIdAndDelete(id);
             return res.status(204).send();
         } catch (err) {

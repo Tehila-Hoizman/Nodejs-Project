@@ -5,6 +5,7 @@ const cors = require("cors");
 //routes
 const userRouter = require("./routes/user.route");
 const recipeRouter = require("./routes/recipe.route");
+const categoryRouter = require("./routes/category.route");
 
 const { pageNotFound, serverNotFound } = require("./middlewares/handleErrors");
 
@@ -27,6 +28,7 @@ app.get("/", (req, res) => {
 })
 app.use("/recipes", recipeRouter);
 app.use("/users", userRouter);
+app.use("/categories", categoryRouter);
 
 // if we got here - path is not found
 app.use(pageNotFound);

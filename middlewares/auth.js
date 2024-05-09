@@ -3,6 +3,7 @@ const { default: mongoose } = require('mongoose');
 const { Recipe } = require('../models/recipe.model');
 
 // middleware that checks the token coming from the client
+
 exports.auth = (req, res, next) => {
     try {
         const { authorization } = req.headers;//extracting the token from the header
@@ -45,14 +46,14 @@ exports.authAdminOrEditorUser = async (req, res, next) => {
         const data = jwt.verify(token, privateKey);// the data that the token contains
         req.user = data;//adding an data to the request
         let recipeId = req.params.id;
+        //המתכון שמצריך הרשאה
         let recipe = await Recipe.findById(recipeId).then(r => {
             return r;
         })
         .catch(err => {
             next({ message: 'recipe not found', status: 404 })
         });
-        console.log("recipe "+recipe.user._id);
-        console.log(data.user_id);
+
         if (data.role == "admin"||recipe && recipe.user._id.toString()===data.user_id.toString())
             next(); // moving to Route/Middlewar
         else
